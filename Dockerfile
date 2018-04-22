@@ -1,4 +1,4 @@
-FROM debian:stretch-slim
+FROM alpine:3.5
 
 ARG BUILD_DATE
 ARG VCS_REF
@@ -15,31 +15,55 @@ LABEL org.label-schema.build-date=$BUILD_DATE \
 			maintainer="Jorge Andrada Prieto <jandradap@gmail.com>" \
 			org.label-schema.docker.cmd=""
 
-RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
+ENV TZ "Europe/Berlin"
 
-RUN apt-get update && apt-get -y install --no-install-recommends \
-  locales apache2 libapache2-mod-php5 php5 php5-curl php5-mysqlnd php5-gd \
-  php5-json php5-ldap php5-mcrypt wget unzip vim mariadb-client \
-  && apt-get clean \
-  && rm -r /var/lib/apt/lists/*
+# Install NGINX and PHP 7
+RUN apk update && apk --no-cache add \
+    bash \
+    tzdata \
+    curl \
+    ca-certificates \
+    s6 \
+    ssmtp \
+    mysql-client \
+    nginx \
+    nginx-mod-http-headers-more \
+  && ln -sf "/usr/share/zoneinfo/$TZ" /etc/localtime \
+  && echo "$TZ" > /etc/timezone && date \
+  && apk --no-cache add \
+    php7 php7-phar php7-curl php7-fpm php7-json php7-zlib php7-gd \
+    php7-xml php7-dom php7-ctype php7-opcache php7-zip php7-iconv \
+    php7-pdo php7-pdo_mysql php7-mysqli php7-mbstring php7-session \
+    php7-mcrypt php7-openssl php7-sockets php7-posix php7-mbstring php7-gettext openssl \
+  && rm -rf /var/cache/apk/* \
+  && ln -s /usr/bin/php7 /usr/bin/php \
+  && rm -f /etc/php7/php-fpm.d/www.conf \
+  && touch /etc/php7/php-fpm.d/env.conf \
+  && rm -rf /var/www
 
-WORKDIR /var/www/html
+# Copy Config
+COPY conf/services.d /etc/services.d
+COPY conf/nginx/nginx.conf /etc/nginx/nginx.conf
+COPY conf/php/php-fpm.conf /etc/php7/
+COPY conf/php/conf.d/php.ini /etc/php7/conf.d/zphp.ini
 
-COPY ./files/000-default.conf ./files/default-ssl.conf /etc/apache2/sites-available/
-
-COPY ./files/entrypoint.sh /usr/local/sbin/
+WORKDIR /var/www
 
 # Download and install the latest sysPass stable release from GitHub
 RUN wget https://github.com/nuxsmin/sysPass/archive/master.zip \
   && unzip master.zip \
   && mv sysPass-master sysPass \
   && chmod 750 sysPass/config sysPass/backup \
-  && chown www-data -R sysPass/
+  && chown nginx:nginx -R sysPass/ \
+  && rm master.zip \
+  && sed -i "s/\/var\/www/\/var\/www\/sysPass/" /etc/nginx/nginx.conf
 
-RUN a2enmod ssl \
-  && a2ensite default-ssl \
-  && chmod 755 /usr/local/sbin/entrypoint.sh
+# Permissions
+RUN mkdir /var/session \
+  && chown -R nginx:nginx /var/www \
+  && chown -R nginx:nginx /var/session \
+  && chmod 750 /var/www -R
 
-EXPOSE 80 443
+EXPOSE 80
 
-ENTRYPOINT ["/usr/local/sbin/entrypoint.sh"]
+ENTRYPOINT ["/bin/s6-svscan", "/etc/services.d"]

@@ -36,3 +36,5 @@ docker-compose -p syspass-recovery -f docker-compose.yml down #stop
 - **sysPass info:** [http://www.syspass.org](http://www.syspass.org)
 - **Install docker-compose:** [https://docs.docker.com/compose/install/](https://docs.docker.com/compose/install/)
 - **Install docker** [https://www.docker.com/community-edition#/download](https://www.docker.com/community-edition#/download)
+
+Dockerfile mod from [https://github.com/kolaente/syspass-docker](https://github.com/kolaente/syspass-docker)
