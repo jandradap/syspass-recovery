@@ -1,4 +1,4 @@
-FROM debian:jessie
+FROM debian:stretch-slim
 
 ARG BUILD_DATE
 ARG VCS_REF
@@ -17,12 +17,11 @@ LABEL org.label-schema.build-date=$BUILD_DATE \
 
 RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
 
-RUN apt-get update \
-	&& apt-get -y install locales \
-	apache2 libapache2-mod-php5 php5 php5-curl php5-mysqlnd php5-gd \
-	php5-json php5-ldap php5-mcrypt wget unzip vim mariadb-client \
-	&& apt-get clean \
-	&& rm -r /var/lib/apt/lists/*
+RUN apt-get update && apt-get -y install --no-install-recommends \
+  locales apache2 libapache2-mod-php5 php5 php5-curl php5-mysqlnd php5-gd \
+  php5-json php5-ldap php5-mcrypt wget unzip vim mariadb-client \
+  && apt-get clean \
+  && rm -r /var/lib/apt/lists/*
 
 WORKDIR /var/www/html
 
@@ -32,14 +31,14 @@ COPY ./files/entrypoint.sh /usr/local/sbin/
 
 # Download and install the latest sysPass stable release from GitHub
 RUN wget https://github.com/nuxsmin/sysPass/archive/master.zip \
-	&& unzip master.zip \
-	&& mv sysPass-master sysPass \
-	&& chmod 750 sysPass/config sysPass/backup \
-	&& chown www-data -R sysPass/
+  && unzip master.zip \
+  && mv sysPass-master sysPass \
+  && chmod 750 sysPass/config sysPass/backup \
+  && chown www-data -R sysPass/
 
 RUN a2enmod ssl \
-	&& a2ensite default-ssl \
-	&& chmod 755 /usr/local/sbin/entrypoint.sh
+  && a2ensite default-ssl \
+  && chmod 755 /usr/local/sbin/entrypoint.sh
 
 EXPOSE 80 443
 
