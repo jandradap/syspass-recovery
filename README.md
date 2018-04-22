@@ -25,7 +25,7 @@ Rename syspass database backup to db.sql
 
 ## Start
 ```shell
-wget https://github.com/jandradap/syspass-recovery/blob/master/docker-compose.yml
+wget https://raw.githubusercontent.com/jandradap/syspass-recovery/master/docker-compose.yml
 #modify config.xml
 #rename syspassdb backup to db.sql
 docker-compose -p syspass-recovery -f docker-compose.yml up -d #start
