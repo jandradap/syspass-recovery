@@ -1,0 +1,4 @@
+#!/bin/sh
+cp /root/config.xml /var/www/sysPass/config/
+chown -R nginx:nginx /var/www/sysPass/config
+chmod -R 750 /var/www/sysPass/config
