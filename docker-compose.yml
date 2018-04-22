@@ -1,7 +1,7 @@
 version: '2'
 services:
   web:
-    image: jorgeandrada/syspass-recovery:develop
+    image: jorgeandrada/syspass-recovery:latest
     restart: always
     ports:
       - "80:80"
